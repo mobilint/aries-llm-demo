@@ -1,5 +1,9 @@
 import { Grid2, Typography } from "@mui/material";
 import { Fragment, MutableRefObject, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import rehypeHighlight from "rehype-highlight";
 import Answer from "./Answer";
 import { LLMClient, LLMState } from "./type";
 
@@ -39,21 +43,40 @@ export default function Dialog({
       {client.dialog.map((qna, index) =>
         <Fragment key={`${index}`}>
           <Grid2 container justifyContent="flex-end">
-            <Typography
+            <Grid2
+              container
+              direction="column"
               sx={{
                 backgroundColor: "#E9EFFB",
                 padding: "25px",
                 borderRadius: "23px",
                 fontWeight: "regular",
+                fontFamily: "Pretendard",
                 fontSize: "20px",
                 lineHeight: "170%",
                 letterSpacing: "-0.3px",
                 color: "#212631",
                 maxWidth: "500px",
+                "& > *:first-of-type": { marginTop: 0 },
+                "& > *:last-of-type": { marginBottom: 0 },
+                "& pre, & code": { fontFamily: "CascadiaCode" },
+                "& ol, & ul": {
+                  marginTop: 0,
+                  marginBottom: 0,
+                  paddingInlineStart: "1.5em",
+                },
+                "& li": {
+                  listStylePosition: "inside",
+                },
               }}
             >
-              {qna.question}
-            </Typography>
+              <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeHighlight, rehypeKatex]}
+              >
+                {qna.question}
+              </ReactMarkdown>
+            </Grid2>
           </Grid2>
           {!([LLMState.ASKING, LLMState.ANSWERING].includes(client.state) && index == client.dialog.length - 1) &&
             <Answer
