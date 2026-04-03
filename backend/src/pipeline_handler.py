@@ -221,6 +221,14 @@ class LLMHandler:
         if session_id in self.sessions:
             logging.info(f"[LLMHandler] Abort signal set for session: {session_id}")
             self.sessions[session_id]["abort_flag"].set()
+
+    def _extract_generate_outputs(self, output: Any) -> tuple[Optional[torch.Tensor], Any]:
+        if isinstance(output, torch.Tensor):
+            return output, None
+
+        sequences = getattr(output, "sequences", None)
+        past_key_values = getattr(output, "past_key_values", None)
+        return sequences, past_key_values
         
     def _debug_print_session(self):
         for session_id in self.sessions:
@@ -311,9 +319,11 @@ class LLMHandler:
                     session = kwargs.pop("session")
                     kwargs.setdefault("pad_token_id", self.tokenizer.eos_token_id)
                     output = self.model.generate(**kwargs)
-                    session["past_token_ids"] = output.sequences.detach().cpu().numpy()
-                    if hasattr(output, "past_key_values"):
-                        session["past_key_values"] = output.past_key_values
+                    output_sequences, output_past_key_values = self._extract_generate_outputs(output)
+                    if output_sequences is not None:
+                        session["past_token_ids"] = output_sequences.detach().cpu().numpy()
+                    if output_past_key_values is not None:
+                        session["past_key_values"] = output_past_key_values
                 except StopIteration:
                     pass
                 except Exception as e:
