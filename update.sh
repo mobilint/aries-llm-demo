@@ -70,23 +70,11 @@ fi
 
 # model_name
 MODELS=(
-  "EXAONE-3.5-2.4B-Instruct"
-  "EXAONE-3.5-7.8B-Instruct"
-  "EXAONE-4.0-1.2B"
-  "EXAONE-Deep-2.4B"
-  "EXAONE-Deep-7.8B"
-  "HyperCLOVAX-SEED-Text-Instruct-1.5B"
-  "Llama-3.2-1B-Instruct"
-  "Llama-3.2-3B-Instruct"
-  "Llama-3.1-8B-Instruct"
+  "EAGLE3-JPharmatron-7B"
   "Qwen2.5-0.5B-Instruct"
   "Qwen2.5-1.5B-Instruct"
   "Qwen2.5-3B-Instruct"
   "Qwen2.5-7B-Instruct"
-  "Qwen3-0.6B"
-  "Qwen3-1.7B"
-  "Qwen3-4B"
-  "Qwen3-8B"
 )
 
 echo "Preparing backend venv and downloading model..."
