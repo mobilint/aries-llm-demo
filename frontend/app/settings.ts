@@ -19,8 +19,8 @@ export type LanguageText = {
   statusPreparingPromptBundle: string,
 };
 
-export const DEFAULT_LANGUAGE = "en";
-export const AVAILABLE_LANGUAGES = ["en", "ko", "ja", "zh"] as const;
+export const DEFAULT_LANGUAGE = "ja";
+export const AVAILABLE_LANGUAGES = ["ja", "en"] as const;
 
 export type PromptBundle = {
   system_prompt: string,

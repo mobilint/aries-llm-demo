@@ -68,7 +68,7 @@ function assignQuestions(models: readonly string[], questions: string[]) {
 }
 
 function questionsForLocale(locale: string, keys: QuestionKey[]) {
-  const localizedQuestions = QUESTION_SETS_BY_LANGUAGE[locale] ?? koQuestions;
+  const localizedQuestions = QUESTION_SETS_BY_LANGUAGE[locale] ?? jaQuestions;
   return keys.map((key) => localizedQuestions[key]);
 }
 

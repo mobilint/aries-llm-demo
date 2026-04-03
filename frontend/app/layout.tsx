@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <CssBaseline />
       <body style={{backgroundColor: "#F6F6F6"}}>
         {children}

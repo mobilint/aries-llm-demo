@@ -1,3 +1,5 @@
+import { DEFAULT_LANGUAGE } from "../settings";
+
 export type QNA = {
   question: string,
   answer: null | string,
@@ -25,7 +27,7 @@ export type LLMClient = {
 
 export const defaultLLMClient: LLMClient = {
   model_id: "",
-  language: "en",
+  language: DEFAULT_LANGUAGE,
   tasksNum: 0,
   state: LLMState.IDLE,
   dialog: [],

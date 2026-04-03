@@ -9,6 +9,7 @@ export default function ModelIcon({
 }) {
   const model_group = model_id.split("/")[0];
   const model_group_icon = model_group == "LGAI-EXAONE" ? "exaone_icon.png" :
+                            model_group == "EQUES" ? "eques_icon.png" :
                             model_group == "naver-hyperclovax" ? "hyperclovax_icon.png" :
                             model_group == "meta-llama" ? "meta_icon.png" :
                             model_group == "CohereLabs" ? "cohere_icon.png" :

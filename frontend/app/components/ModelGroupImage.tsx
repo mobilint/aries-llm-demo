@@ -9,6 +9,7 @@ export default function ModelGroupImage({
 }) {
   const model_group = model_id.split("/")[0];
   const model_group_image = model_group == "LGAI-EXAONE" ? "exaone.webp" :
+                            model_group == "EQUES" ? "eques.png" :
                             model_group == "naver-hyperclovax" ? "hyperclovax.png" :
                             model_group == "meta-llama" ? "meta.png" :
                             model_group == "CohereLabs" ? "cohere.png" :
