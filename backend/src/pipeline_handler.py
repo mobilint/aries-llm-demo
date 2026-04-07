@@ -229,6 +229,45 @@ class LLMHandler:
         sequences = getattr(output, "sequences", None)
         past_key_values = getattr(output, "past_key_values", None)
         return sequences, past_key_values
+
+    def _log_generation_metrics(
+        self,
+        session_id: str,
+        model_id: str,
+        input_token_count: int,
+        generated_token_count: int,
+        generation_start_time: float,
+        first_token_time: Optional[float],
+        generation_end_time: float,
+        is_aborted: bool,
+    ) -> None:
+        total_elapsed = max(generation_end_time - generation_start_time, 0.0)
+        ttft = None if first_token_time is None else max(first_token_time - generation_start_time, 0.0)
+        decode_duration = 0.0 if first_token_time is None else max(generation_end_time - first_token_time, 0.0)
+
+        prefill_fps = None
+        if ttft is not None and ttft > 0 and input_token_count > 0:
+            prefill_fps = input_token_count / ttft
+
+        decode_fps = None
+        if decode_duration > 0 and generated_token_count > 0:
+            decode_fps = generated_token_count / decode_duration
+
+        ttft_log = f"{ttft:.3f}s" if ttft is not None else "N/A"
+        prefill_fps_log = f"{prefill_fps:.2f}" if prefill_fps is not None else "N/A"
+        decode_fps_log = f"{decode_fps:.2f}" if decode_fps is not None else "N/A"
+
+        logging.info(
+            f"[{session_id}] Generation metrics\n"
+            f"\tmodel:\t\t{model_id}\n"
+            f"\tstatus:\t\t{'aborted' if is_aborted else 'completed'}\n"
+            f"\tinput_tokens:\t{input_token_count}\n"
+            f"\tgenerated_tokens:\t{generated_token_count}\n"
+            f"\ttotal:\t\t{total_elapsed:.3f}s\n"
+            f"\tTTFT:\t\t{ttft_log}\n"
+            f"\tPrefill FPS:\t{prefill_fps_log} tok/s\n"
+            f"\tDecode FPS:\t{decode_fps_log} tok/s"
+        )
         
     def _debug_print_session(self):
         for session_id in self.sessions:
@@ -289,6 +328,11 @@ class LLMHandler:
 
         answer = ""
         is_aborted = False
+        generation_start_time = time()
+        first_token_time: Optional[float] = None
+        input_token_count = 0
+        generated_token_count = 0
+        generated_sequence_length: Optional[int] = None
 
         try:
             abort_flag.clear()
@@ -307,6 +351,7 @@ class LLMHandler:
 
             prompt_text = self.tokenizer.apply_chat_template(user_prompt, **chat_template_kwargs)
             inputs = self.tokenizer(prompt_text, return_tensors="pt").to(self.device)
+            input_token_count = int(inputs["input_ids"].shape[-1])
             streamer = StopOnSignalTextIteratorStreamer(
                 self.tokenizer,
                 stop_event,
@@ -322,6 +367,8 @@ class LLMHandler:
                     output_sequences, output_past_key_values = self._extract_generate_outputs(output)
                     if output_sequences is not None:
                         session["past_token_ids"] = output_sequences.detach().cpu().numpy()
+                        nonlocal generated_sequence_length
+                        generated_sequence_length = int(output_sequences.shape[-1])
                     if output_past_key_values is not None:
                         session["past_key_values"] = output_past_key_values
                 except StopIteration:
@@ -362,12 +409,17 @@ class LLMHandler:
                 if abort_flag.is_set():
                     stop_event.set()
                     break
+                if first_token_time is None:
+                    first_token_time = time()
                 answer += new_token
                 if forEachGeneratedToken:
                     forEachGeneratedToken(new_token)
 
             thread.join()
             is_aborted = abort_flag.is_set()
+
+            if generated_sequence_length is not None:
+                generated_token_count = max(generated_sequence_length - input_token_count, 0)
             
             # session is not deleted
             if session_id in self.sessions:
@@ -385,4 +437,14 @@ class LLMHandler:
             return True, answer
 
         finally:
+            self._log_generation_metrics(
+                session_id=session_id,
+                model_id=model_id,
+                input_token_count=input_token_count,
+                generated_token_count=generated_token_count,
+                generation_start_time=generation_start_time,
+                first_token_time=first_token_time,
+                generation_end_time=time(),
+                is_aborted=is_aborted,
+            )
             self.is_available = True
