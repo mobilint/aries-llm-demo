@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type = Application
+Name = LLM
+Icon = llm-demo.png
+Exec = /usr/bin/env bash -lc 'cd "$HOME/aries-llm-demo" && ./run.sh'
+Terminal = true
