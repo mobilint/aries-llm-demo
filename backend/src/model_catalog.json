@@ -2,6 +2,8 @@
   "default_model": "Qwen/Qwen3-30B-A3B",
   "models": {
     "Qwen/Qwen3-30B-A3B": {
+      "npu_model_id": "mobilint/Qwen3-30B-A3B-aries-rb",
+      "npu_load_kwargs": {},
       "disable_thinking": true,
       "repetition_penalty": 1.1
     }

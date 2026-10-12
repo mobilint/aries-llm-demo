@@ -70,7 +70,7 @@ fi
 
 # model_name
 MODELS=(
-  "Qwen3-30B-A3B"
+  "Qwen3-30B-A3B-aries-rb"
 )
 
 echo "Preparing backend venv and downloading model..."

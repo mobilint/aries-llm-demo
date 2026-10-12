@@ -16,6 +16,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 
 MODEL_CONFIG_RESERVED_KEYS = {
     "disable_thinking",
+    "npu_model_id",
+    "npu_load_kwargs",
 }
 
 class StopOnSignalTextIteratorStreamer(TextIteratorStreamer):
@@ -103,7 +105,8 @@ class LLMHandler:
 
     def _get_model_id(self, model_id: str):
         if self.is_npu:
-            return re.sub(r"^[^/]+", "mobilint", model_id)
+            npu_model_id = self.model_configs.get(model_id, {}).get("npu_model_id")
+            return npu_model_id or re.sub(r"^[^/]+", "mobilint", model_id)
         else:
             return model_id
 
@@ -129,13 +132,17 @@ class LLMHandler:
                 trust_remote_code=True,
             )
 
+            # Dense models take the whole DEV_NO device. A catalog entry can replace these kwargs with
+            # npu_load_kwargs, e.g. {} for a MoE release whose config.json places its roles across devices.
+            npu_load_kwargs = self.model_configs[model_id].get(
+                "npu_load_kwargs",
+                {"dev_no": self.dev_no, "core_mode": "global8", "target_clusters": [0, 1]},
+            )
             self.models[model_id] = AutoModelForCausalLM.from_pretrained(
                 converted_model_id,
                 trust_remote_code=True,
-                dev_no=self.dev_no,
-                core_mode="global8",
-                target_clusters=[0, 1],
                 no_launch=True,
+                **npu_load_kwargs,
             ).to(self.device) # type: ignore
 
             self.tokenizer = self.tokenizers[self.current_model_id]
